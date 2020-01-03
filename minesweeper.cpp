@@ -110,12 +110,11 @@ MoveResult make_move(const char position[3], const char mines[9][9], char reveal
     revealed[row][col] = '*';
     return VALID_MOVE;
   }
-  
+
   if (is_complete(mines, revealed))
     return SOLVED_BOARD;
 
   int mine_count = count_mines(position, mines);
-
   if (mine_count == 0) {
     revealed[row][col] = ' ';
     for (int i = row - 1; i <= row + 1; ++i) {
@@ -134,35 +133,26 @@ MoveResult make_move(const char position[3], const char mines[9][9], char reveal
 }
 
 bool find_safe_move(const char revealed[9][9], char move[MAX_LENGTH]) {
-  // if on a square with a number, and there are equal number of ? or * around it, then the ? is a safe * move
-  // if the number of * around a number is equal to the number then all ? are safe moves
-
   for (int row = 0; row < 9; ++row) {
     for (int col = 0; col < 9; ++col) {
       if (revealed[row][col] >= '1' && revealed[row][col] <= '8') {
         char position[3] = {row + 'A', col + '1', ' '};
-
+        char end_char;
         if (count_mines(position, revealed) == (int) (revealed[row][col] - '0')) {
-          for (int i = row - 1; i <= row + 1; ++i) {
-            for (int j = col - 1; j <= col + 1; ++j) {
-              if (!valid_coordinates(i, j) || revealed[i][j] != '?') continue;
-              
-              char safe_pos[3] = {i + 'A', j + '1', '\0'};
-              strcpy(move, safe_pos);
-              return true;
-            }
-          }
+          end_char = '\0';
+        } else if ((count_char(position, revealed, '?') + count_mines(position, revealed)) == (int) (revealed[row][col] - '0')) {
+          end_char = '*';
+        } else {
+          continue;
         }
-
-        if ((count_char(position, revealed, '?') + count_mines(position, revealed)) == (int) (revealed[row][col] - '0')) {
-          for (int i = row - 1; i <= row + 1; ++i) {
-            for (int j = col - 1; j <= col + 1; ++j) {
-              if (!valid_coordinates(i, j) || revealed[i][j] != '?') continue;
-              
-              char safe_pos[3] = {i + 'A', j + '1', '*'};
-              strcpy(move, safe_pos);
-              return true;
-            }
+        
+        for (int i = row - 1; i <= row + 1; ++i) {
+          for (int j = col - 1; j <= col + 1; ++j) {
+            if (!valid_coordinates(i, j) || revealed[i][j] != '?') continue;
+            
+            char safe_pos[3] = {i + 'A', j + '1', end_char};
+            strcpy(move, safe_pos);
+            return true;
           }
         }
       }
@@ -178,8 +168,4 @@ void convert_position_to_row_col(const char position[2], int &row, int &col) {
 
 bool valid_coordinates(const int row, const int col) {
   return row >= 0 && row < 9 && col >= 0 && col < 9;
-}
-
-bool is_move_valid(const char position[3], const char mines[9][9], char revealed[9][9], MoveResult result) {
-
 }
